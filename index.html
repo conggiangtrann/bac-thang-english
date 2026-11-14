@@ -787,7 +787,7 @@ function touchStreak(){const t=today(); if(state.streak.last===t) return;
   state.streak.count = state.streak.last && dayDiff(state.streak.last,t)===1 ? state.streak.count+1 : 1; state.streak.last=t;}
 function addXP(n){state.xp+=n; logXP(n); touchStreak(); save(); renderStat();}
 function save(){
-  checkBadges(); if(typeof renderCoach==="function") setTimeout(renderCoach,0);
+  checkBadges(); if(typeof push==="function") push(); if(typeof renderCoach==="function") setTimeout(renderCoach,0);
   try{localStorage.setItem(LS_KEY,JSON.stringify(state))}catch(e){}
   if(!cap.db||!uid) return;
   clearTimeout(saveTimer); saveTimer=setTimeout(flush,800);
@@ -871,9 +871,11 @@ async function ask(prompt,opts={}){
   return cap.sample.json(prompt,Object.assign({modelTier:"default"},opts));
 }
 function aiError(e){
-  if(e&&e.code==="unavailable") return "Phần chấm bài bằng AI chỉ chạy khi mở trang này trên claude.ai khi đã đăng nhập.";
+  if(e&&e.code==="unavailable") return cloudReady()?"Đăng nhập ở trang Hồ sơ để dùng AI (chỉ tài khoản được cấp quyền), hoặc mở bản trên claude.ai.":"Phần chấm bài bằng AI chỉ chạy khi mở trang này trên claude.ai khi đã đăng nhập.";
+  if(e&&e.code==="offline") return "Đang không có mạng. Phần AI cần mạng, các phần khác vẫn học bình thường.";
+  if(e&&e.code==="refused") return "AI không xử lý được nội dung này. Thử viết lại câu khác nhé.";
   if(e&&e.code==="not_granted") return "Bạn chưa cho phép trang dùng Claude. Mở menu Permissions của artifact để bật.";
-  if(e&&e.code==="rate_limited") return "Đang gửi quá nhiều yêu cầu. Đợi một phút rồi thử lại.";
+  if(e&&e.code==="rate_limited") return cap.sample&&cap.sample._cloud?"Hôm nay đã dùng hết lượt AI. Mai dùng tiếp nhé.":"Đang gửi quá nhiều yêu cầu. Đợi một phút rồi thử lại.";
   return "AI chưa trả lời được. Thử lại sau ít giây.";
 }
 
@@ -1024,6 +1026,107 @@ function shareBlock(){
   p.append(row);
   p.append(el("p",{class:"muted",style:"font-size:14px;margin:12px 0 0"},"Khi có bài học mới, app trên máy mọi người tự tải về lúc có mạng và hiện thông báo để cập nhật."));
   app.append(p);
+}
+
+/* ===================== CLOUD: sign-in, sync and AI (installed app only) ===================== */
+const SB_URL="", SB_KEY=""; // Supabase project URL and publishable key
+let sb=null, sbUser=null, pushT=null, lastSync=null, otpEmail="";
+function cloudReady(){return IS_PWA_HOST&&!!SB_URL&&!!SB_KEY}
+function loadSB(){return new Promise((res,rej)=>{if(window.supabase)return res();const sc=document.createElement("script");sc.src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js";sc.onload=res;sc.onerror=rej;document.head.append(sc)})}
+async function initCloud(){
+  if(!cloudReady())return;
+  try{await loadSB()}catch(e){return}
+  sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
+  const {data}=await sb.auth.getSession(); await setUser(data.session?data.session.user:null);
+  sb.auth.onAuthStateChange((_e,sess)=>{setUser(sess?sess.user:null)});
+  addEventListener("online",()=>pull());
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")pull()});
+}
+async function setUser(u){
+  const changed=(u&&u.id)!==(sbUser&&sbUser.id); sbUser=u;
+  if(!u){if(cap.sample&&cap.sample._cloud)cap.sample=null;if(changed)softRender();return}
+  if(changed){await pull();checkAI()}
+}
+function softRender(){const r=route();if(r==="home"||r==="me"||r==="more")render();else{renderStat();renderCoach()}}
+// Merge two progress snapshots without losing anything learned on either device.
+function mergeState(a,b){
+  if(!b||typeof b!=="object")return a;
+  const m=JSON.parse(JSON.stringify(a)), B=JSON.parse(JSON.stringify(b));
+  m.done=m.done||{};for(const id in B.done||{})m.done[id]=Object.assign({},m.done[id],B.done[id]);
+  m.cards=m.cards||{};for(const k in B.cards||{}){const x=m.cards[k],y=B.cards[k];m.cards[k]=!x?y:(y.box>x.box||(y.box===x.box&&y.due>x.due))?y:x}
+  m.xp=Math.max(m.xp||0,B.xp||0);
+  const sa=m.streak||{},sb2=B.streak||{};m.streak=(sb2.last||"")>(sa.last||"")?sb2:(sb2.last===sa.last?{last:sa.last,count:Math.max(sa.count||0,sb2.count||0)}:sa);
+  m.log=m.log||{};for(const d in B.log||{})m.log[d]=Math.max(m.log[d]||0,B.log[d]);
+  m.tests=m.tests||{};for(const n in B.tests||{}){const x=m.tests[n],y=B.tests[n];m.tests[n]=!x||y.best>x.best?y:x}
+  m.badges=[...new Set([...(m.badges||[]),...(B.badges||[])])];
+  m.stats=m.stats||{};for(const k in B.stats||{})m.stats[k]=Math.max(m.stats[k]||0,B.stats[k]);
+  const ids=new Set((m.gen||[]).map(l=>l.id));m.gen=(m.gen||[]).concat((B.gen||[]).filter(l=>!ids.has(l.id)));
+  m.stories=Object.assign({},B.stories,m.stories);
+  m.placed=m.placed||B.placed||"";m.guideSeen=m.guideSeen||B.guideSeen;
+  const da=m.daily||{},db=B.daily||{};
+  if(db.date&&db.date>(da.date||""))m.daily=db;else if(db.date===da.date)m.daily={date:da.date,review:da.review||db.review,skill:da.skill||db.skill,talk:Math.max(da.talk||0,db.talk||0),bonus:da.bonus||db.bonus};
+  return m;
+}
+async function pull(){
+  if(!sb||!sbUser||!navigator.onLine)return;
+  const {data,error}=await sb.from("progress").select("state").eq("user_id",sbUser.id).maybeSingle();
+  if(error)return;
+  if(data&&data.state){state=mergeState(state,data.state);try{localStorage.setItem(LS_KEY,JSON.stringify(state))}catch(e){}}
+  push(true);softRender();
+}
+function push(now){
+  if(!sb||!sbUser)return;
+  clearTimeout(pushT);
+  pushT=setTimeout(async()=>{if(!navigator.onLine)return;
+    const {error}=await sb.from("progress").upsert({user_id:sbUser.id,state:JSON.parse(JSON.stringify(state)),updated_at:new Date().toISOString()});
+    if(!error){lastSync=new Date();const t=document.getElementById("sync-time");if(t)t.textContent=syncText()}},now?0:1500);
+}
+function syncText(){return lastSync?`Đồng bộ lúc ${String(lastSync.getHours()).padStart(2,"0")}:${String(lastSync.getMinutes()).padStart(2,"0")}`:"Đang đồng bộ…"}
+function parseJSONText(t){const x=String(t||"").trim().replace(/^```(?:json)?\s*/,"").replace(/\s*```$/,"");try{return JSON.parse(x)}catch(e){const i=x.indexOf("{"),j=x.lastIndexOf("}");if(i>=0&&j>i)return JSON.parse(x.slice(i,j+1));throw {code:"bad"}}}
+function makeCloudSample(){
+  const call=async(input,opts={})=>{
+    if(!navigator.onLine)throw {code:"offline"};
+    const {data,error}=await sb.functions.invoke("ai",{body:{input,tier:opts.modelTier||"default"}});
+    if(error){let code="upstream_error";try{const b=await error.context.json();code=b.code||code}catch(e){}throw {code}}
+    if(opts.onText)opts.onText({text:data.text,delta:data.text});
+    return {text:data.text,truncated:false};
+  };
+  const f=(i,o)=>call(i,o); f.json=async(i,o)=>parseJSONText((await call(i,o)).text); f._cloud=true; return f;
+}
+async function checkAI(){
+  if(!sb||!sbUser||!navigator.onLine)return;
+  try{const {data,error}=await sb.functions.invoke("ai",{body:{ping:true}});if(!error&&data&&data.allowed){cap.sample=makeCloudSample();softRender()}}catch(e){}
+}
+function accountPanel(){
+  const p=el("section",{class:"panel account",style:"margin-bottom:16px"});
+  if(!cloudReady()){
+    p.innerHTML=IS_PWA_HOST?`<h2>Tài khoản</h2><p class="muted" style="margin:0">Đăng nhập và đồng bộ đang được cài đặt.</p>`
+      :`<h2>Tài khoản</h2><p class="muted" style="margin:0">Ở bản claude.ai, tiến độ tự đồng bộ khi bạn đăng nhập claude.ai. Bản cài trên máy có đăng nhập bằng email riêng.</p>`;
+    return p}
+  if(sbUser){
+    p.innerHTML=`<div class="row" style="justify-content:space-between"><div style="min-width:0"><div class="label">Đã đăng nhập</div><b style="overflow-wrap:anywhere">${esc(sbUser.email)}</b><div class="muted" style="font-size:14px"><span id="sync-time">${syncText()}</span> · AI: ${cap.sample&&cap.sample._cloud?"đang bật":"không có quyền dùng"}</div></div></div>`;
+    const sy=el("button",{class:"btn small"},"Đồng bộ ngay");sy.onclick=()=>pull();
+    const out=el("button",{class:"btn small"},"Đăng xuất");out.onclick=async()=>{await sb.auth.signOut();toast("Đã đăng xuất. Tiến độ vẫn còn trên máy này.")};
+    const r=el("div",{class:"row",style:"margin-top:10px"});r.append(sy,out);p.append(r);return p}
+  p.innerHTML=`<h2>Đăng nhập để đồng bộ</h2><p class="muted" style="margin:0 0 10px">Đăng nhập bằng email trên mọi máy: tiến độ tự đồng bộ giữa điện thoại và máy tính. Không cần mật khẩu, app gửi mã 6 số vào email.</p>`;
+  const em=el("input",{type:"text",id:"login-email",inputmode:"email",autocomplete:"email",placeholder:"Email của bạn",style:"flex:1;min-width:200px",value:otpEmail});
+  const send=el("button",{class:"btn primary"},"Gửi mã");
+  const r1=el("div",{class:"row"});r1.append(em,send);p.append(r1);
+  const r2=el("div",{class:"row",style:"margin-top:10px",hidden:otpEmail?null:""});
+  const code=el("input",{type:"text",id:"login-code",inputmode:"numeric",autocomplete:"one-time-code",placeholder:"Mã 6 số trong email",style:"flex:1;min-width:160px;letter-spacing:.2em"});
+  const ok=el("button",{class:"btn amber"},"Đăng nhập");r2.append(code,ok);p.append(r2);
+  if(!otpEmail)r2.hidden=true;
+  send.onclick=async()=>{const e=em.value.trim();if(!/^\S+@\S+\.\S+$/.test(e)){toast("Email chưa đúng");return}
+    if(!navigator.onLine){toast("Cần có mạng để đăng nhập");return}
+    send.disabled=true;const {error}=await sb.auth.signInWithOtp({email:e,options:{shouldCreateUser:true}});send.disabled=false;
+    if(error){toast(/rate|seconds/i.test(error.message)?"Vừa gửi mã rồi, đợi một phút rồi thử lại":"Chưa gửi được mã, thử lại sau");return}
+    otpEmail=e;r2.hidden=false;code.focus();toast("Đã gửi mã. Xem hộp thư (cả mục Spam).")};
+  ok.onclick=async()=>{const t=code.value.replace(/\D/g,"");if(t.length<6){toast("Nhập đủ mã trong email");return}
+    ok.disabled=true;const {error}=await sb.auth.verifyOtp({email:otpEmail,token:t,type:"email"});ok.disabled=false;
+    if(error){toast("Mã sai hoặc đã hết hạn. Bấm Gửi mã để nhận mã mới.");return}
+    otpEmail="";toast("Đăng nhập thành công. Đang đồng bộ…")};
+  code.onkeydown=e=>{if(e.key==="Enter")ok.click()};
+  return p;
 }
 
 /* ===================== WEEK CHART ===================== */
@@ -1412,7 +1515,7 @@ function renderMe(){
   const top=el("section",{class:"dial"},`<div class="label">Hồ sơ của bạn</div><h1 style="font-size:clamp(24px,4vw,32px)">${LEVELS[ci].id} · ${LEVELS[ci].name}</h1>
     <div class="kpis"><div><b>${done}/${SYLLABUS.length}</b>bài đã xong</div><div><b>${state.streak.count}</b>ngày học liền</div><div><b>${state.xp}</b>điểm</div><div><b>${cards}</b>thẻ trong hộp ôn</div></div>
     <div class="journey">${journeySVG(ci)}</div>`);
-  app.append(top,weekChart(),badgeShelf());
+  app.append(accountPanel(),top,weekChart(),badgeShelf());
   app.append(el("p",{class:"muted"},`Muốn chuyển tiến độ sang máy khác hoặc bản offline: xem cuối trang <a href="#guide">Cách học</a>.`));
 }
 function genBlock(){
@@ -1917,6 +2020,7 @@ Return ONLY JSON: {"band":5.5,"fluencyVi":"comment on fluency & coherence in Vie
 
 /* ===================== BOOT ===================== */
 render();
+initCloud();
 (async()=>{
   if(!window.claude||!window.claude.use) return;
   const [db,user,sample,dict,tts]=await Promise.all(["db","user","sample","dictation","tts"].map(n=>window.claude.use(n).catch(()=>null)));
