@@ -265,6 +265,8 @@ body.has-coach{padding-bottom:calc(90px + env(safe-area-inset-bottom,0px))}
 .qr-code{background:#fff;padding:10px;border-radius:12px;border:1px solid var(--line);line-height:0}
 .login{display:flex;flex-direction:column;gap:8px;max-width:420px}
 .login input{border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:10px 12px;font-size:16px}
+.acct{margin-left:auto;text-decoration:none;font-weight:700;font-size:13px;padding:5px 12px;border-radius:999px;background:var(--amber);color:#1d1404}
+.acct.on{background:var(--good-soft);color:var(--good)}
 /* program list */
 .program{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--line)}
 .lvl-head{display:flex;align-items:baseline;gap:12px;padding:22px 0 8px}
@@ -908,7 +910,8 @@ function render(){
 }
 function renderStat(){
   const due=Object.values(state.cards).filter(c=>c.due<=today()).length;
-  document.getElementById("stat").innerHTML=`<span>Chuỗi <b>${state.streak.count}</b> ngày</span><span><b>${state.xp}</b> điểm</span><span><b>${due}</b> từ cần ôn</span>`;
+  document.getElementById("stat").innerHTML=`<span>Chuỗi <b>${state.streak.count}</b> ngày</span><span><b>${state.xp}</b> điểm</span><span><b>${due}</b> từ cần ôn</span>`+
+    (typeof cloudReady==="function"&&cloudReady()?(sbUser?`<a class="acct on" href="#me" title="${esc(sbUser.email)}">● Đã đồng bộ</a>`:`<a class="acct" href="#me">Đăng nhập</a>`):"");
 }
 window.addEventListener("hashchange",render);
 
