@@ -28,7 +28,8 @@ Deno.serve(async (req) => {
   if (!ALLOWED.includes((user.email ?? "").toLowerCase())) return json({ code: "not_granted" }, 403);
 
   const body = await req.json().catch(() => ({}));
-  if (body.ping) return json({ allowed: true });
+  if (body.ping) return json({ allowed: true, ready: !!Deno.env.get("ANTHROPIC_API_KEY") });
+  if (!Deno.env.get("ANTHROPIC_API_KEY")) return json({ code: "unavailable" }, 503);
 
   const messages = Array.isArray(body.input)
     ? body.input

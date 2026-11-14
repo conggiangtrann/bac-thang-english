@@ -263,6 +263,8 @@ body.has-coach{padding-bottom:calc(90px + env(safe-area-inset-bottom,0px))}
 .ii{width:20px;height:20px;vertical-align:-4px;color:var(--accent)}
 .qr{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin-top:12px}
 .qr-code{background:#fff;padding:10px;border-radius:12px;border:1px solid var(--line);line-height:0}
+.login{display:flex;flex-direction:column;gap:8px;max-width:420px}
+.login input{border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:10px 12px;font-size:16px}
 /* program list */
 .program{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--line)}
 .lvl-head{display:flex;align-items:baseline;gap:12px;padding:22px 0 8px}
@@ -1029,8 +1031,8 @@ function shareBlock(){
 }
 
 /* ===================== CLOUD: sign-in, sync and AI (installed app only) ===================== */
-const SB_URL="", SB_KEY=""; // Supabase project URL and publishable key
-let sb=null, sbUser=null, pushT=null, lastSync=null, otpEmail="";
+const SB_URL="https://heaugzofcofliopmhkoi.supabase.co", SB_KEY="sb_publishable_-UlDeR1ZVn5K608HR7sk7A_H91EoOFe"; // Supabase project URL and publishable key
+let sb=null, sbUser=null, pushT=null, lastSync=null;
 function cloudReady(){return IS_PWA_HOST&&!!SB_URL&&!!SB_KEY}
 function loadSB(){return new Promise((res,rej)=>{if(window.supabase)return res();const sc=document.createElement("script");sc.src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js";sc.onload=res;sc.onerror=rej;document.head.append(sc)})}
 async function initCloud(){
@@ -1095,7 +1097,7 @@ function makeCloudSample(){
 }
 async function checkAI(){
   if(!sb||!sbUser||!navigator.onLine)return;
-  try{const {data,error}=await sb.functions.invoke("ai",{body:{ping:true}});if(!error&&data&&data.allowed){cap.sample=makeCloudSample();softRender()}}catch(e){}
+  try{const {data,error}=await sb.functions.invoke("ai",{body:{ping:true}});if(!error&&data&&data.allowed&&data.ready){cap.sample=makeCloudSample();softRender()}}catch(e){}
 }
 function accountPanel(){
   const p=el("section",{class:"panel account",style:"margin-bottom:16px"});
@@ -1108,24 +1110,27 @@ function accountPanel(){
     const sy=el("button",{class:"btn small"},"Đồng bộ ngay");sy.onclick=()=>pull();
     const out=el("button",{class:"btn small"},"Đăng xuất");out.onclick=async()=>{await sb.auth.signOut();toast("Đã đăng xuất. Tiến độ vẫn còn trên máy này.")};
     const r=el("div",{class:"row",style:"margin-top:10px"});r.append(sy,out);p.append(r);return p}
-  p.innerHTML=`<h2>Đăng nhập để đồng bộ</h2><p class="muted" style="margin:0 0 10px">Đăng nhập bằng email trên mọi máy: tiến độ tự đồng bộ giữa điện thoại và máy tính. Không cần mật khẩu, app gửi mã 6 số vào email.</p>`;
-  const em=el("input",{type:"text",id:"login-email",inputmode:"email",autocomplete:"email",placeholder:"Email của bạn",style:"flex:1;min-width:200px",value:otpEmail});
-  const send=el("button",{class:"btn primary"},"Gửi mã");
-  const r1=el("div",{class:"row"});r1.append(em,send);p.append(r1);
-  const r2=el("div",{class:"row",style:"margin-top:10px",hidden:otpEmail?null:""});
-  const code=el("input",{type:"text",id:"login-code",inputmode:"numeric",autocomplete:"one-time-code",placeholder:"Mã 6 số trong email",style:"flex:1;min-width:160px;letter-spacing:.2em"});
-  const ok=el("button",{class:"btn amber"},"Đăng nhập");r2.append(code,ok);p.append(r2);
-  if(!otpEmail)r2.hidden=true;
-  send.onclick=async()=>{const e=em.value.trim();if(!/^\S+@\S+\.\S+$/.test(e)){toast("Email chưa đúng");return}
+  p.innerHTML=`<h2>Đăng nhập để đồng bộ</h2><p class="muted" style="margin:0 0 10px">Dùng cùng một email và mật khẩu trên mọi máy: tiến độ tự đồng bộ giữa điện thoại và máy tính. Lần đầu thì bấm "Tạo tài khoản".</p>`;
+  const f=el("form",{class:"login",autocomplete:"on"});
+  const em=el("input",{type:"email",id:"login-email",name:"email",autocomplete:"username",placeholder:"Email",required:""});
+  const pw=el("input",{type:"password",id:"login-pass",name:"password",autocomplete:"current-password",placeholder:"Mật khẩu (ít nhất 6 ký tự)",minlength:"6",required:""});
+  const r=el("div",{class:"row"});
+  const inB=el("button",{class:"btn primary",type:"submit"},"Đăng nhập");
+  const upB=el("button",{class:"btn",type:"button"},"Tạo tài khoản");
+  r.append(inB,upB);f.append(em,pw,r);p.append(f);
+  const go=async(mode)=>{
+    const e=em.value.trim(),k=pw.value;
+    if(!/^\S+@\S+\.\S+$/.test(e)){toast("Email chưa đúng");return}
+    if(k.length<6){toast("Mật khẩu cần ít nhất 6 ký tự");return}
     if(!navigator.onLine){toast("Cần có mạng để đăng nhập");return}
-    send.disabled=true;const {error}=await sb.auth.signInWithOtp({email:e,options:{shouldCreateUser:true}});send.disabled=false;
-    if(error){toast(/rate|seconds/i.test(error.message)?"Vừa gửi mã rồi, đợi một phút rồi thử lại":"Chưa gửi được mã, thử lại sau");return}
-    otpEmail=e;r2.hidden=false;code.focus();toast("Đã gửi mã. Xem hộp thư (cả mục Spam).")};
-  ok.onclick=async()=>{const t=code.value.replace(/\D/g,"");if(t.length<6){toast("Nhập đủ mã trong email");return}
-    ok.disabled=true;const {error}=await sb.auth.verifyOtp({email:otpEmail,token:t,type:"email"});ok.disabled=false;
-    if(error){toast("Mã sai hoặc đã hết hạn. Bấm Gửi mã để nhận mã mới.");return}
-    otpEmail="";toast("Đăng nhập thành công. Đang đồng bộ…")};
-  code.onkeydown=e=>{if(e.key==="Enter")ok.click()};
+    inB.disabled=upB.disabled=true;
+    const {error}=mode==="up"?await sb.auth.signUp({email:e,password:k}):await sb.auth.signInWithPassword({email:e,password:k});
+    inB.disabled=upB.disabled=false;
+    if(error){toast(/already|registered/i.test(error.message)?"Email này đã có tài khoản. Bấm Đăng nhập.":/invalid/i.test(error.message)?"Sai email hoặc mật khẩu.":"Chưa đăng nhập được, thử lại sau.");return}
+    toast(mode==="up"?"Đã tạo tài khoản. Đang đồng bộ…":"Đăng nhập thành công. Đang đồng bộ…");
+  };
+  f.onsubmit=e=>{e.preventDefault();go("in")};
+  upB.onclick=()=>go("up");
   return p;
 }
 
