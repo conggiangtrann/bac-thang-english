@@ -1245,6 +1245,7 @@ function renderGuide(){
 
 /* ===================== INSTALL / SHARE ===================== */
 const PWA_URL="https://conggiangtrann.github.io/bac-thang-english/";
+const APP_VERSION="12 · 15/11/2026";
 const IS_PWA_HOST=location.hostname.endsWith("github.io");
 const IS_STANDALONE=(()=>{try{return matchMedia("(display-mode: standalone)").matches||navigator.standalone===true}catch(e){return false}})();
 let installPrompt=null;
@@ -1895,6 +1896,7 @@ function renderMe(){
     <div class="lvchips">${LEVELS.map((L,i)=>`<span class="${i<ci?"done":i===ci?"now":""}">${i<ci?"✓ ":""}${L.id}</span>`).join("")}</div>`);
   app.append(accountPanel(),voicePanel(),el("a",{class:"hub-card",href:"#guide",style:"margin-bottom:16px"},`<div class="hc-ico">?</div><div style="min-width:0"><b>Cách học hiệu quả</b><span>Mỗi ngày học gì, theo thứ tự nào, bao lâu thì lên trình</span></div><em>Xem</em>`),top,weekChart(),badgeShelf());
   app.append(el("p",{class:"muted"},`Muốn chuyển tiến độ sang máy khác hoặc bản offline: xem cuối trang <a href="#guide">Cách học</a>.`));
+  app.append(el("p",{class:"muted",style:"font-size:12px;text-align:center"},`Phiên bản ${APP_VERSION}`));
 }
 function genBlock(){
   const wrap=el("div",{style:"padding:12px 0"});
@@ -2715,7 +2717,8 @@ initCloud();
 </script>
 <script>
 if("serviceWorker" in navigator){
-  addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+  addEventListener("load",()=>navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>{r.update().catch(()=>{});document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")r.update().catch(()=>{})})}).catch(()=>{}));
+  const hadCtl=!!navigator.serviceWorker.controller;let reloaded=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(reloaded||!hadCtl)return;reloaded=true;location.reload()});
   navigator.serviceWorker.addEventListener("message",e=>{
     if(!e.data||e.data.type!=="updated"||document.getElementById("upd"))return;
     const b=document.createElement("div");b.id="upd";b.className="upd";
