@@ -267,6 +267,8 @@ body.has-coach{padding-bottom:calc(90px + env(safe-area-inset-bottom,0px))}
 .login input{border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:10px 12px;font-size:16px}
 .acct{margin-left:auto;text-decoration:none;font-weight:700;font-size:13px;padding:5px 12px;border-radius:999px;background:var(--amber);color:#1d1404}
 .acct.on{background:var(--good-soft);color:var(--good)}
+.scen-a{display:block;text-align:left;border:1px solid var(--line);background:var(--bg);border-radius:var(--r);padding:12px 14px;text-decoration:none;color:var(--ink)}
+.scen-a:hover{border-color:var(--accent)}.scen-a b{display:block}.scen-a span{font-size:14px;color:var(--muted)}
 /* program list */
 .program{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--line)}
 .lvl-head{display:flex;align-items:baseline;gap:12px;padding:22px 0 8px}
@@ -855,6 +857,42 @@ function micButton(label,target){
   return b;
 }
 
+/* ===================== FALLBACKS when the page has no Claude runtime (installed app) ===================== */
+// Speech-to-text from the browser itself (Safari on iPhone, Chrome), with the same shape as the dictation capability.
+function makeWebDictation(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR||window.self!==window.top) return null;
+  let rec=null, st="idle"; const ph=[],fh=[],sh=[];
+  const emit=(arr,v)=>arr.forEach(f=>{try{f(v)}catch(e){}});
+  const setSt=(x,reason)=>{st=x;emit(sh,reason?{state:x,reason}:{state:x})};
+  return {
+    start(opts={}){return new Promise((res,rej)=>{
+      try{
+        rec=new SR(); rec.lang=opts.language||"en-US"; rec.interimResults=true; rec.continuous=true;
+        let started=false;
+        rec.onstart=()=>{started=true;setSt("listening");res()};
+        rec.onresult=e=>{let interim="";for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i];if(r.isFinal)emit(fh,{text:" "+r[0].transcript.trim()});else interim+=r[0].transcript}emit(ph,{text:interim})};
+        rec.onerror=e=>{const code=/not-allowed|service-not-allowed/.test(e.error)?"not_granted":"upstream_error";if(!started)rej({code})};
+        rec.onend=()=>{rec=null;emit(ph,{text:""});setSt("idle","stopped")};
+        setSt("starting"); rec.start();
+      }catch(e){setSt("idle","unavailable");rej({code:"unavailable"})}
+    })},
+    stop(){if(!rec)return Promise.resolve();return new Promise(r=>{const end=rec.onend;rec.onend=()=>{end&&end();r()};try{rec.stop()}catch(e){r()}})},
+    active(){return st!=="idle"},
+    onPartial(f){ph.push(f);return()=>{}}, onFinal(f){fh.push(f);return()=>{}}, onState(f){sh.push(f);return()=>{}}
+  };
+}
+// Hand a ready-made prompt to the learner's own Claude subscription in claude.ai.
+function claudeButton(label,buildPrompt,cls){
+  const a=el("a",{class:"btn "+(cls||"primary"),href:"https://claude.ai/new",target:"_blank",rel:"noopener"},label);
+  a.addEventListener("click",e=>{const pr=buildPrompt(); if(pr===null){e.preventDefault();return}
+    a.href="https://claude.ai/new?q="+encodeURIComponent(pr);
+    try{navigator.clipboard.writeText(pr).catch(()=>{})}catch(err){}
+    toast("Đã mở Claude và sao chép sẵn nội dung. Nếu ô chat trống, bấm Dán rồi gửi.")});
+  return a;
+}
+function handoffNote(){return el("p",{class:"muted",style:"font-size:14px;margin:8px 0 0"},"Mở Claude (claude.ai hoặc app Claude) bằng gói Claude của bạn, không tốn thêm tiền. Nội dung bài làm đã được viết sẵn thành câu lệnh.")}
+
 /* ===================== HELPERS ===================== */
 function el(tag,attrs={},html){const e=document.createElement(tag);for(const k in attrs){if(k==="on"){for(const ev in attrs.on)e.addEventListener(ev,attrs.on[ev])}else e.setAttribute(k,attrs[k])} if(html!=null)e.innerHTML=html; return e}
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
@@ -1226,9 +1264,10 @@ const wordCache={};
 async function wordInfo(tok,sentence,box){
   const word=tok.replace(/^[^A-Za-z]+|[^A-Za-z'’-]+$/g,""); if(!word)return;
   box.hidden=false; say(word,{rate:0.8});
-  box.innerHTML=`<div class="row" style="justify-content:space-between"><b style="font-size:20px">${esc(word)}</b><button class="btn small" id="wb-close">Đóng</button></div><div id="wb-body" class="muted">${cap.sample?'<span class="spin"></span> Đang tra nghĩa…':"Tra nghĩa bằng AI cần mở trang trên claude.ai."}</div>`;
+  box.innerHTML=`<div class="row" style="justify-content:space-between"><b style="font-size:20px">${esc(word)}</b><button class="btn small" id="wb-close">Đóng</button></div><div id="wb-body" class="muted">${cap.sample?'<span class="spin"></span> Đang tra nghĩa…':""}</div>`;
   box.querySelector("#wb-close").onclick=()=>box.hidden=true;
-  if(!cap.sample)return;
+  if(!cap.sample){const b=box.querySelector("#wb-body");b.className="";
+    b.innerHTML=`<div class="row" style="margin-top:6px"><a class="btn small" target="_blank" rel="noopener" href="https://dictionary.cambridge.org/dictionary/english-vietnamese/${encodeURIComponent(word.toLowerCase())}">Từ điển Cambridge Anh–Việt</a><a class="btn small" target="_blank" rel="noopener" href="https://translate.google.com/?sl=en&tl=vi&text=${encodeURIComponent(sentence)}">Dịch cả câu</a></div>`;return}
   const key=word.toLowerCase()+"|"+sentence;
   try{
     const r=wordCache[key]||(wordCache[key]=await ask(`A Vietnamese learner of English tapped the word "${word}" in this sentence: "${sentence}". Give the meaning in THIS context. Return ONLY JSON: {"base":"dictionary form of the word or the short phrase it belongs to","ipa":"/IPA/","vi":"short Vietnamese meaning in this context","ex":"one new simple example sentence"}`,{modelTier:"quick"}));
@@ -1367,7 +1406,7 @@ function renderSound(){
     let buf="";const mic=micButton("Nói",()=>{buf="";said.textContent="…";return{onPartial:t=>said.textContent=(buf+" "+t).trim()||"…",onFinal:t=>{buf=(buf+t).trim();said.textContent=buf},
       onEnd:()=>{if(!buf){said.textContent="Chưa nghe thấy gì, thử lại nhé.";return}const r=compareSpeech(sent,buf);said.innerHTML=r.html;sc.textContent=r.score+"%";sc.style.color=r.score>=80?"var(--good)":"var(--amber)"}}});
     if(mic)row.append(mic);row.append(sc);it.append(el("div",{class:"target"},esc(sent)),row,said);sp.append(it)});
-  if(!cap.dict)sp.append(el("p",{class:"muted",style:"font-size:14px"},"Chấm phát âm bằng micro chỉ chạy trên Chrome hoặc app Claude trên máy tính. Ở đây bạn nghe mẫu và nói theo."));
+  if(!cap.dict)sp.append(el("p",{class:"muted",style:"font-size:14px"},"Trình duyệt này không có nhận giọng nói. Hãy mở bằng Safari (iPhone) hoặc Chrome. Ở đây bạn nghe mẫu và nói theo."));
   app.append(ex,sp);
 }
 
@@ -1507,10 +1546,10 @@ function openSheet(it){
 function renderMore(){
   app.append(el("section",{class:"g-hero",style:"margin-bottom:18px"},`<div class="label">Luyện thêm</div><h1>Chọn kỹ năng muốn luyện</h1><p>Ngoài giáo trình chính. Dùng khi bạn còn thời gian, hoặc muốn tập trung vào một kỹ năng.</p>`));
   const g=el("div",{class:"hub"});
-  [["#talk","Giao tiếp với AI","Đóng vai đối tác, đồng nghiệp, giám khảo IELTS. AI sửa câu cho bạn sau mỗi lượt.",cap.sample?"":"Cần mạng và claude.ai"],
+  [["#talk","Giao tiếp với AI","Đóng vai đối tác, đồng nghiệp, giám khảo IELTS. AI sửa câu cho bạn sau mỗi lượt.",cap.sample?"":"Dùng gói Claude của bạn"],
    ["#stories","Truyện đọc chậm","Truyện ngắn kiểu VOA. Chạm vào từ để xem nghĩa và lưu lại.",""],
    ["#sound","Phát âm cho người Việt","Âm cuối, TH, trọng âm, nối âm. Nghe phân biệt rồi tự nói.",""],
-   ["#ielts","Phòng luyện IELTS","Viết Task 1, Task 2 và nói Speaking, có chấm band ước lượng.",cap.sample?"":"Cần mạng và claude.ai"],
+   ["#ielts","Phòng luyện IELTS","Viết Task 1, Task 2 và nói Speaking, có chấm band ước lượng.",cap.sample?"":"Dùng gói Claude của bạn"],
    ["#placement","Kiểm tra trình độ","12 câu, 3 phút. App chọn chỗ bắt đầu phù hợp.",""]]
    .forEach(([h,t,d,w])=>g.append(el("a",{class:"hubcard",href:h},`<b>${t}</b><span>${d}</span>${w?`<em>${w}</em>`:""}`)));
   app.append(g);
@@ -1766,7 +1805,7 @@ function practicePanel(items,title,key){
 function tabSpeak(l){
   const p=el("section",{class:"panel"});
   p.innerHTML=`<h2>Nhại theo (shadowing)</h2><p class="hint">Nghe câu mẫu, rồi nói lại ngay, cùng nhịp và ngữ điệu. Từ xanh là máy nghe đúng, từ đỏ là cần nói lại. Mục tiêu: mỗi câu từ 80% trở lên.</p>`;
-  if(!cap.dict) p.append(el("p",{class:"muted"},"Micro chỉ dùng được khi mở trang trên Chrome hoặc ứng dụng Claude cho máy tính. Ở đây bạn vẫn nghe mẫu và tự nói theo, rồi bấm \"Đã luyện\"."));
+  if(!cap.dict) p.append(el("p",{class:"muted"},"Trình duyệt này không có nhận giọng nói. Hãy mở bằng Safari (iPhone) hoặc Chrome. Ở đây bạn vẫn nghe mẫu và tự nói theo, rồi bấm \"Đã luyện\"."));
   const scores={};
   l.speak.forEach((sent,i)=>{
     const it=el("div",{class:"speak-item"});
@@ -1806,7 +1845,11 @@ function tabWrite(l){
   const out=el("div",{class:"fb"});
   p.append(ta,el("div",{class:"row",style:"justify-content:space-between;margin-top:8px"}),out);
   p.children[p.children.length-2].append(cnt,b);
-  if(!cap.sample){b.textContent="Đánh dấu đã viết";b.onclick=()=>{if(words(ta.value).length<l.write.min){toast("Viết thêm cho đủ "+l.write.min+" từ nhé.");return}markSkill(l.id,"write",15);toast("Đã lưu. Chấm bằng AI cần mở trên claude.ai.")};app.append(p);return}
+  if(!cap.sample){
+    b.replaceWith(claudeButton("Nhờ Claude chữa bài",()=>{const t=ta.value.trim();if(words(t).length<Math.min(10,l.write.min)){toast("Viết thêm vài câu nữa nhé.");return null}
+      markSkill(l.id,"write",15);
+      return `Bạn là giáo viên tiếng Anh tận tình, chữa bài cho người Việt trình độ ${l.level}. Đề bài: "${l.write.en}". Trọng tâm bài học: ${l.grammar.t}.\n\nBài của tôi:\n"""${t}"""\n\nHãy: 1) chấm điểm /10; 2) liệt kê từng lỗi (sai → đúng) và giải thích ngắn bằng tiếng Việt; 3) viết lại bài cho tự nhiên hơn nhưng vẫn đúng trình độ ${l.level}; 4) cho một mẹo để lần sau viết tốt hơn.`}));
+    p.append(handoffNote());app.append(p);return}
   b.onclick=async()=>{
     const text=ta.value.trim(); if(words(text).length<Math.min(10,l.write.min)){toast("Viết thêm vài câu nữa nhé.");return}
     b.disabled=true;b.innerHTML=`<span class="spin"></span> Đang chữa…`;out.innerHTML="";
@@ -1893,7 +1936,14 @@ const SCENARIOS=[
 let talk={sc:null,level:"A2",msgs:[]};
 function renderTalk(){
   const p=el("section",{class:"panel"},`<h2>Giao tiếp với AI</h2><p class="muted" style="margin:0">Chọn tình huống. AI đóng vai người nước ngoài, nói ngắn, đúng trình độ bạn chọn, và sửa câu của bạn sau mỗi lượt.</p>`);
-  if(!cap.sample){p.append(el("p",{class:"hint",style:"margin-top:12px"},aiError({code:"unavailable"})));app.append(p);return}
+  if(!cap.sample){
+    const lvS=el("select",{id:"talk-level-x"},`<option value="A1">Rất dễ (A1)</option><option value="A2" selected>Dễ (A2)</option><option value="B1">Vừa (B1)</option><option value="B2">Khó (B2)</option>`);
+    const r=el("div",{class:"row",style:"margin-top:12px"},`<span class="label">Độ khó</span>`);r.append(lvS);p.append(r);
+    const g=el("div",{class:"scen"});
+    SCENARIOS.forEach(sc=>{const a=claudeButton("",()=>`Hãy đóng vai luyện nói tiếng Anh với tôi (người Việt, đi làm, trình độ ${lvS.value}). Bạn là ${sc.role}\nQuy tắc: mỗi lượt bạn nói ngắn bằng tiếng Anh ${lvS.value<"B1"?"(tối đa 2 câu đơn giản, từ vựng cơ bản như VOA Learning English)":"(tối đa 3 câu, rõ ràng)"} và hỏi tôi đúng một câu. Sau mỗi câu tôi trả lời, thêm một dòng "Sửa:" với cách nói tự nhiên hơn và giải thích lỗi chính bằng tiếng Việt (nếu câu của tôi đã tốt thì ghi "Tốt lắm"). Nếu tôi viết tiếng Việt, hãy chỉ tôi cách nói bằng tiếng Anh. Bắt đầu đi.`,"");
+      a.className="scen-a";a.innerHTML=`<b>${sc.t}</b><span>${sc.d}</span>`;g.append(a)});
+    p.append(g,el("p",{class:"muted",style:"font-size:14px;margin:10px 0 0"},"Chọn tình huống: Claude mở ra và bắt đầu đóng vai, dùng gói Claude của bạn. Trong app Claude trên điện thoại, bấm biểu tượng micro để nói thay vì gõ."));
+    const dd=daily();dd.talk=Math.max(dd.talk||0,0);app.append(p);return}
   const lv=el("div",{class:"row",style:"margin-top:12px"},`<span class="label">Độ khó</span>`);
   const sel=el("select",{id:"talk-level"},`<option value="A1">Rất dễ (A1)</option><option value="A2">Dễ (A2)</option><option value="B1">Vừa (B1)</option><option value="B2">Khó (B2)</option>`);
   sel.value=talk.level;sel.onchange=()=>talk.level=sel.value;lv.append(sel);p.append(lv);
@@ -1966,7 +2016,26 @@ function renderIelts(){
   const tabs=el("div",{class:"skilltabs"});
   [["w1","Writing Task 1"],["w2","Writing Task 2"],["sp","Speaking"]].forEach(([k,n])=>{const b=el("button",{class:ieltsTab===k?"on":""},n);b.onclick=()=>{ieltsTab=k;render()};tabs.append(b)});
   p.append(tabs);app.append(p);
-  if(!cap.sample){app.append(el("section",{class:"panel"},`<p class="hint">${aiError({code:"unavailable"})}</p>`));return}
+  if(!cap.sample){
+    const q=el("section",{class:"panel"});app.append(q);
+    if(ieltsTab==="sp"){const it=IELTS.sp[spi];
+      q.innerHTML=`<div class="label">${it.p} · câu ${spi+1}/${IELTS.sp.length}</div><p style="font-size:19px;font-weight:600;margin:6px 0 10px">${esc(it.q)}</p>`;
+      const r=el("div",{class:"row"});const pb=el("button",{class:"btn small"},"Nghe câu hỏi");pb.onclick=()=>say(it.q.replace(/\(.*\)/,""),{rate:0.95});
+      const nx=el("button",{class:"btn small"},"Câu khác");nx.onclick=()=>{spi=(spi+1)%IELTS.sp.length;render()};r.append(pb,nx);q.append(r);
+      const ta=el("textarea",{id:"sp-ans-x",placeholder:"Bấm \"Trả lời bằng giọng nói\" và nói như đang thi, hoặc gõ câu trả lời."});ta.style.marginTop="12px";
+      let base="";const mic=micButton("Trả lời bằng giọng nói",()=>{base=ta.value.trim();return{onPartial:t=>ta.value=(base+" "+t).trim(),onFinal:t=>{base=(base+" "+t.trim()).trim();ta.value=base},onEnd:()=>{}}});
+      const r2=el("div",{class:"row",style:"margin-top:8px"});if(mic)r2.append(mic);
+      r2.append(claudeButton("Nhờ Claude chấm band",()=>{const t=ta.value.trim();if(words(t).length<15){toast("Trả lời dài hơn một chút nhé.");return null}state.stats.ielts++;save();
+        return `Bạn là giám khảo IELTS Speaking. Đây là bản chép lời (speech-to-text) câu trả lời của tôi, một người Việt. Bỏ qua dấu câu, không chấm phát âm.\nCâu hỏi (${it.p}): ${it.q}\nCâu trả lời: """${t}"""\nHãy cho band ước lượng, nhận xét độ trôi chảy, từ vựng, ngữ pháp bằng tiếng Việt, sửa tối đa 5 lỗi, rồi viết một câu trả lời mẫu band 7 dựa trên ý của tôi và 3 cụm từ nên học thuộc.`}));
+      q.append(ta,r2,handoffNote());return}
+    const task=ieltsTab==="w1"?IELTS.w1:IELTS.w2[w2i];
+    q.append(el("div",{class:"hint",style:"white-space:pre-line;color:var(--ink)"},esc(task)));
+    if(ieltsTab==="w2"){const nb=el("button",{class:"btn small",style:"margin-top:8px"},"Đổi đề khác");nb.onclick=()=>{w2i=(w2i+1)%IELTS.w2.length;render()};q.append(nb)}
+    const {ta,cnt}=writeBox("ielts-"+ieltsTab+(ieltsTab==="w2"?w2i:""),ieltsTab==="w1"?150:250);ta.style.minHeight="280px";ta.style.marginTop="12px";
+    const r=el("div",{class:"row",style:"justify-content:space-between;margin-top:8px"});
+    r.append(cnt,claudeButton("Nhờ Claude chấm band",()=>{const t=ta.value.trim();if(words(t).length<60){toast("Bài quá ngắn để chấm. Viết ít nhất 60 từ.");return null}state.stats.ielts++;save();
+      return `Bạn là giám khảo IELTS Writing có kinh nghiệm. Chấm nghiêm theo band descriptors chính thức của Academic Writing ${ieltsTab==="w1"?"Task 1":"Task 2"}, dùng nửa band. Giải thích bằng tiếng Việt.\nĐề: ${task}\nBài của tôi (${words(t).length} từ):\n"""${t}"""\nHãy cho: band tổng; band và nhận xét cho từng tiêu chí (${ieltsTab==="w1"?"Task Achievement":"Task Response"}, Coherence & Cohesion, Lexical Resource, Grammatical Range & Accuracy); tối đa 8 lỗi quan trọng (sai → đúng, lý do); 3 việc cụ thể để lên band tiếp theo; và một bài viết lại band 7.5 giữ ý của tôi.`}));
+    q.append(ta,r,handoffNote());return}
   const q=el("section",{class:"panel"});app.append(q);
   if(ieltsTab==="sp") return speakingIelts(q);
   const task=ieltsTab==="w1"?IELTS.w1:IELTS.w2[w2i];
@@ -2027,12 +2096,13 @@ Return ONLY JSON: {"band":5.5,"fluencyVi":"comment on fluency & coherence in Vie
 }
 
 /* ===================== BOOT ===================== */
+if(!cap.dict){cap.dict=makeWebDictation();if(cap.dict)setupDictation()}
 render();
 initCloud();
 (async()=>{
   if(!window.claude||!window.claude.use) return;
   const [db,user,sample,dict,tts]=await Promise.all(["db","user","sample","dictation","tts"].map(n=>window.claude.use(n).catch(()=>null)));
-  Object.assign(cap,{db,user,sample,dict,tts}); setupDictation();
+  Object.assign(cap,{db,user,sample,tts}); if(dict){cap.dict=dict;setupDictation()}
   if(db&&user){
     try{uid=await user.id()}catch(e){}
     if(uid){
