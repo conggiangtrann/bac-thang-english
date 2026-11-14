@@ -252,6 +252,17 @@ body.has-coach{padding-bottom:calc(90px + env(safe-area-inset-bottom,0px))}
 .hubcard b{font-family:var(--f-display);font-size:20px}.hubcard span{color:var(--muted);font-size:15px}
 .hubcard em{font-style:normal;font-size:12px;color:var(--amber);font-weight:700}
 @media (max-width:560px){.t-steps{grid-template-columns:1fr}.today .btn.big{align-self:stretch}.nlabel{width:96px;font-size:12px}.nlabel.left{margin-left:-142px}}
+.foot{margin-top:36px}
+.dl{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--surface);border:2px solid var(--ink);border-radius:16px;padding:16px 18px;text-decoration:none;color:var(--ink)}
+.dl div{flex:1;min-width:180px;display:flex;flex-direction:column}.dl b{font-family:var(--f-display);font-size:19px}.dl span{color:var(--muted);font-size:14px}
+.dl em{font-style:normal;font-weight:800;background:var(--amber);color:#1d1404;padding:8px 16px;border-radius:999px}
+.install{display:flex;flex-direction:column;gap:10px}
+.isteps{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:12px}
+.isteps li{display:flex;gap:12px;align-items:flex-start;font-size:16px}
+.isteps .n{flex:none;width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:800}
+.ii{width:20px;height:20px;vertical-align:-4px;color:var(--accent)}
+.qr{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin-top:12px}
+.qr-code{background:#fff;padding:10px;border-radius:12px;border:1px solid var(--line);line-height:0}
 /* program list */
 .program{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--line)}
 .lvl-head{display:flex;align-items:baseline;gap:12px;padding:22px 0 8px}
@@ -363,6 +374,7 @@ input[type=text],select{border:1px solid var(--line);border-radius:8px;backgroun
 </div></header>
 
 <main class="wrap" id="app"></main>
+<footer class="wrap foot" id="foot"></footer>
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -885,9 +897,10 @@ function render(){
   else if(r==="stories") renderStories();
   else if(r==="placement") renderPlacement();
   else if(r==="more") renderMore();
+  else if(r==="install") renderInstall();
   else if(r==="me") renderMe();
   else renderHome();
-  renderStat(); renderCoach(); window.scrollTo(0,0);
+  renderStat(); renderCoach(); renderFoot(r); window.scrollTo(0,0);
 }
 function renderStat(){
   const due=Object.values(state.cards).filter(c=>c.due<=today()).length;
@@ -949,6 +962,68 @@ function renderGuide(){
   const im=el("button",{class:"btn primary"},"Nạp tiến độ");im.onclick=()=>{try{const d=JSON.parse(decodeURIComponent(escape(atob(ta.value.trim()))));if(!d||typeof d!=="object"||!d.done)throw 0;state=Object.assign(JSON.parse(JSON.stringify(DEFAULT_STATE)),d);save();if(cap.db&&uid)flush();toast("Đã nạp tiến độ");location.hash="home"}catch(e){toast("Mã không hợp lệ. Hãy sao chép lại đủ cả đoạn mã.")}};
   const r=el("div",{class:"row",style:"margin-top:8px"});r.append(ex,im);s8.append(ta,r);
   app.append(s1,s2,s3,s4,s5,s6,s7,s8);
+}
+
+/* ===================== INSTALL / SHARE ===================== */
+const PWA_URL="https://conggiangtrann.github.io/bac-thang-english/";
+const IS_PWA_HOST=location.hostname.endsWith("github.io");
+const IS_STANDALONE=(()=>{try{return matchMedia("(display-mode: standalone)").matches||navigator.standalone===true}catch(e){return false}})();
+let installPrompt=null;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installPrompt=e;if(route()==="install")render()});
+function renderFoot(r){
+  const f=document.getElementById("foot"); f.innerHTML="";
+  if(IS_STANDALONE||r==="install"){f.hidden=true;return} f.hidden=false;
+  const a=el("a",{class:"dl",href:IS_PWA_HOST?"#install":PWA_URL+"#install"},`<svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path fill="currentColor" d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 3v13h10V5H7zm5 14.2a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg><div style="min-width:0"><b>Tải app về máy</b><span>Cài lên điện thoại hoặc máy tính, học được cả khi không có mạng</span></div><em>Tải app →</em>`);
+  if(!IS_PWA_HOST){a.setAttribute("target","_blank");a.setAttribute("rel","noopener")}
+  f.append(a);
+}
+function renderInstall(){
+  const ua=navigator.userAgent||"", ios=/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1), android=/Android/.test(ua);
+  const safari=/Safari/.test(ua)&&!/CriOS|FxiOS|EdgiOS|Chrome|Android/.test(ua);
+  app.append(el("section",{class:"g-hero",style:"margin-bottom:18px"},`<div class="label">Tải app</div><h1>Cài Bậc Thang English lên máy</h1><p>Miễn phí. Không cần App Store. Cài xong app có biểu tượng trên màn hình chính, mở được cả khi không có mạng. Tiến độ học lưu ngay trên máy của bạn.</p>`));
+  if(IS_STANDALONE){app.append(el("section",{class:"panel"},`<h2>Bạn đang dùng app đã cài</h2><p class="muted" style="margin:0">Mọi thứ đã sẵn sàng. Khi có bài mới, app tự báo để bạn cập nhật.</p>`));shareBlock();return}
+  if(!IS_PWA_HOST){
+    const p=el("section",{class:"panel install"},`<h2>Bước 1: mở trang cài đặt</h2><p class="muted" style="margin:0">Bạn đang xem app trong claude.ai. Để cài, hãy mở trang dưới đây.</p>`);
+    p.append(el("a",{class:"btn amber big",href:PWA_URL+"#install",target:"_blank",rel:"noopener",style:"margin-top:12px;align-self:flex-start"},"Mở trang cài đặt"));
+    p.append(qrBlock());app.append(p);shareBlock();return}
+  const steps=el("section",{class:"panel install"});
+  if(installPrompt){
+    steps.innerHTML=`<h2>Cài bằng một nút</h2>`;
+    const b=el("button",{class:"btn amber big",style:"align-self:flex-start"},"Cài app");
+    b.onclick=async()=>{installPrompt.prompt();try{const r=await installPrompt.userChoice;if(r.outcome==="accepted")toast("Đã cài. Mở app từ màn hình chính nhé.")}catch(e){}installPrompt=null};
+    steps.append(b);
+  }else if(ios){
+    steps.innerHTML=safari?`<h2>Cài trên iPhone / iPad</h2>
+     <ol class="isteps"><li><span class="n">1</span><div>Bấm nút <b>Chia sẻ</b> <svg class="ii" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2l4 4-1.4 1.4L13 5.8V15h-2V5.8L9.4 7.4 8 6l4-4zM5 10h3v2H6v8h12v-8h-2v-2h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V11a1 1 0 0 1 1-1z"/></svg> ở thanh dưới (hoặc trên) của Safari.</div></li>
+     <li><span class="n">2</span><div>Kéo xuống, chọn <b>Thêm vào MH chính</b> (Add to Home Screen).</div></li>
+     <li><span class="n">3</span><div>Bấm <b>Thêm</b>. Biểu tượng Bậc Thang hiện trên màn hình chính.</div></li>
+     <li><span class="n">4</span><div>Mở app từ biểu tượng đó <b>một lần khi đang có mạng</b> để tải hết bài. Từ đó học offline được.</div></li></ol>`
+     :`<h2>Mở bằng Safari để cài</h2><p>Trên iPhone, chỉ Safari mới cài được app này. Sao chép link bên dưới, mở Safari và dán vào thanh địa chỉ.</p>`;
+  }else if(android){
+    steps.innerHTML=`<h2>Cài trên Android</h2><ol class="isteps"><li><span class="n">1</span><div>Mở trang này bằng <b>Chrome</b>.</div></li><li><span class="n">2</span><div>Bấm nút <b>⋮</b> ở góc trên bên phải.</div></li><li><span class="n">3</span><div>Chọn <b>Cài đặt ứng dụng</b> hoặc <b>Thêm vào màn hình chính</b>.</div></li></ol>`;
+  }else{
+    steps.innerHTML=`<h2>Cài trên máy tính</h2><ol class="isteps"><li><span class="n">1</span><div>Mở trang này bằng <b>Chrome</b> hoặc <b>Edge</b>.</div></li><li><span class="n">2</span><div>Bấm biểu tượng <b>Cài đặt</b> ở cuối thanh địa chỉ, hoặc menu <b>⋮</b> → <b>Cast, lưu và chia sẻ</b> → <b>Cài đặt trang này làm ứng dụng</b>.</div></li></ol><h2 style="margin-top:18px">Cài lên điện thoại</h2><p class="muted" style="margin:0">Mở camera điện thoại, quét mã này rồi làm theo hướng dẫn hiện ra.</p>`;
+    steps.append(qrBlock());
+  }
+  app.append(steps);shareBlock();
+}
+function qrBlock(){
+  const box=el("div",{class:"qr"},`<div class="qr-code" id="qr"></div><span class="muted">Quét bằng camera điện thoại</span>`);
+  const draw=()=>{const t=box.querySelector("#qr");if(!t||t.childElementCount)return;try{new QRCode(t,{text:PWA_URL+"#install",width:168,height:168,colorDark:"#13211F",colorLight:"#FFFFFF"})}catch(e){box.hidden=true}};
+  if(window.QRCode)setTimeout(draw,0);else{const sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";sc.onload=draw;sc.onerror=()=>box.hidden=true;document.head.append(sc)}
+  return box;
+}
+function shareBlock(){
+  const p=el("section",{class:"panel"},`<h2>Chia sẻ cho bạn bè, đồng nghiệp</h2><p class="muted" style="margin:0">Ai có link đều cài và học được, miễn phí. Mỗi người có tiến độ riêng trên máy của mình.</p>`);
+  const row=el("div",{class:"row",style:"margin-top:12px"});
+  const link=el("input",{type:"text",id:"share-link",readonly:"",value:PWA_URL,style:"flex:1;min-width:220px"});
+  const cp=el("button",{class:"btn primary"},"Sao chép link");
+  cp.onclick=()=>{link.select();try{navigator.clipboard.writeText(PWA_URL).then(()=>toast("Đã sao chép link")).catch(()=>toast("Bôi đen link rồi sao chép nhé"))}catch(e){toast("Bôi đen link rồi sao chép nhé")}};
+  row.append(link,cp);
+  if(IS_PWA_HOST&&navigator.share){const sh=el("button",{class:"btn"},"Chia sẻ…");sh.onclick=()=>navigator.share({title:"Bậc Thang English",text:"App học tiếng Anh từ mất gốc đến IELTS, miễn phí, học được offline",url:PWA_URL}).catch(()=>{});row.append(sh)}
+  p.append(row);
+  p.append(el("p",{class:"muted",style:"font-size:14px;margin:12px 0 0"},"Khi có bài học mới, app trên máy mọi người tự tải về lúc có mạng và hiện thông báo để cập nhật."));
+  app.append(p);
 }
 
 /* ===================== WEEK CHART ===================== */
@@ -1862,5 +1937,16 @@ render();
   render();
 })();
 </script>
-<script>if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}</script>
+<script>
+if("serviceWorker" in navigator){
+  addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+  navigator.serviceWorker.addEventListener("message",e=>{
+    if(!e.data||e.data.type!=="updated"||document.getElementById("upd"))return;
+    const b=document.createElement("div");b.id="upd";b.className="upd";
+    b.innerHTML='<b>Đã có bản mới với bài học cập nhật.</b><button class="btn amber small">Cập nhật ngay</button>';
+    b.querySelector("button").onclick=()=>location.reload();document.body.append(b);
+  });
+}
+</script>
+<style>.upd{position:fixed;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top,0px));z-index:40;background:var(--ink);color:var(--bg);border-radius:14px;padding:10px 12px 10px 16px;display:flex;gap:12px;align-items:center;max-width:calc(100% - 24px);box-shadow:0 6px 24px rgba(0,0,0,.2)}</style>
 </body></html>
