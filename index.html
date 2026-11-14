@@ -181,6 +181,77 @@ input.gap{width:9em;max-width:60vw;margin:0 4px;padding:4px 8px;border:none;bord
 input.gap.ok{border-color:var(--good);background:var(--good-soft)}input.gap.no{border-color:var(--bad);background:var(--bad-soft)}
 .pfb{font-size:14px;min-height:0}
 .summary{border-left:4px solid var(--accent)}
+.today{background:var(--accent);color:var(--accent-ink);border-radius:18px;padding:22px;margin-bottom:16px;display:flex;flex-direction:column;gap:16px}
+.today .label{color:inherit;opacity:.8}
+.today h1{font-size:clamp(24px,5vw,32px);font-family:var(--f-display)}
+.t-top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
+.t-badges{display:flex;gap:10px}
+.tb{background:rgba(255,255,255,.14);border-radius:12px;padding:8px 12px;text-align:center;min-width:72px}
+.tb b{display:block;font-family:var(--f-display);font-size:22px;line-height:1.1}.tb span{font-size:12px;opacity:.85}
+.t-steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.t-steps li{display:flex;gap:10px;align-items:flex-start;background:rgba(255,255,255,.1);border-radius:12px;padding:10px 12px}
+.t-steps .ck{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid currentColor;display:grid;place-items:center;font-weight:800;font-size:13px;opacity:.9}
+.t-steps li.ok .ck{background:var(--amber);border-color:var(--amber);color:#1d1404}
+.t-steps b{display:block;font-size:15px}.t-steps span{font-size:13px;opacity:.85}
+.btn.big{font-size:17px;padding:13px 22px;justify-content:center}
+.today .btn.big{align-self:flex-start}
+.place-strip{display:flex;flex-direction:column;border:1px dashed var(--accent);border-radius:12px;padding:12px 16px;text-decoration:none;color:var(--ink);margin-bottom:16px}
+.place-strip span{color:var(--accent);font-size:14px}
+.chsw{display:flex;gap:8px;overflow-x:auto;padding:6px 2px 10px;scrollbar-width:none}
+.chsw::-webkit-scrollbar{display:none}
+.chip{flex:none;position:relative;width:46px;height:46px;border:none;background:transparent;padding:0;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;color:var(--muted)}
+.chip svg{position:absolute;inset:0;width:100%;height:100%}
+.chip .rg{fill:var(--surface);stroke:var(--line);stroke-width:3}.chip .rf{fill:none;stroke:var(--accent);stroke-width:3;stroke-linecap:round}
+.chip span{position:relative}
+.chip.on .rg{fill:var(--ink)}.chip.on span{color:var(--bg)}
+.chip.pass span{color:var(--good)}.chip.pass.on span{color:var(--bg)}
+.ch-banner{margin:6px 0 8px}.ch-banner h2{font-family:var(--f-display);font-size:26px}
+.stairs{position:relative;max-width:420px;margin:10px auto 0}
+.trail{position:absolute;left:50%;top:0;transform:translateX(-50%);overflow:visible}
+.trail path{fill:none;stroke:var(--line);stroke-width:6;stroke-dasharray:2 14;stroke-linecap:round}
+.node{position:absolute;width:68px;height:68px;margin:-34px 0 0 -34px;border-radius:50%;border:3px solid var(--line);background:var(--surface);color:var(--muted);font-family:var(--f-display);font-weight:800;font-size:20px;display:grid;place-items:center;box-shadow:0 5px 0 var(--line);transition:transform .15s}
+.node:hover{transform:translateY(-2px)}
+.node:active{transform:translateY(3px);box-shadow:0 2px 0 var(--line)}
+.node.done{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);box-shadow:0 5px 0 color-mix(in srgb,var(--accent) 60%,#000)}
+.node.now{background:var(--amber);border-color:var(--amber);color:#1d1404;width:80px;height:80px;margin:-40px 0 0 -40px;font-size:24px;box-shadow:0 6px 0 color-mix(in srgb,var(--amber) 60%,#000)}
+.node.part{border-color:var(--accent);color:var(--accent)}
+.node .ring{position:absolute;inset:-6px;width:calc(100% + 12px);height:calc(100% + 12px)}
+.node .ring circle{fill:none;stroke:var(--accent);stroke-width:4;stroke-linecap:round}
+.node.test{border-radius:18px;transform:rotate(45deg);width:62px;height:62px;margin:-31px 0 0 -31px}
+.node.test svg{transform:rotate(-45deg)}
+.node.test:hover{transform:rotate(45deg) translateY(-2px)}
+.node.test.done{background:var(--good);border-color:var(--good);color:#fff}
+.nlabel{position:absolute;font-size:13px;font-weight:600;line-height:1.25;width:130px;color:var(--ink);pointer-events:none}
+.nlabel.left{margin-left:-180px;margin-top:-10px;text-align:right}
+.nlabel.right{margin-left:50px;margin-top:-10px}
+.nlabel.below{margin-left:-65px;margin-top:46px;text-align:center}
+.stairs-sec{overflow-x:clip}
+.bubble{position:absolute;transform:translateX(-50%);background:var(--ink);color:var(--bg);font-weight:800;font-size:13px;padding:5px 12px;border-radius:10px;white-space:nowrap;pointer-events:none}
+.bubble::after{content:"";position:absolute;left:50%;bottom:-6px;margin-left:-6px;border:6px solid transparent;border-bottom:0;border-top-color:var(--ink)}
+@media (prefers-reduced-motion:no-preference){.bubble{animation:bob 1.6s ease-in-out infinite}@keyframes bob{50%{transform:translate(-50%,-4px)}}}
+.sheet-wrap{position:fixed;inset:0;z-index:30}
+.sheet-back{position:absolute;inset:0;background:rgba(0,0,0,.35)}
+.sheet{position:absolute;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;background:var(--surface);border-radius:20px 20px 0 0;padding:22px max(20px,env(safe-area-inset-left,0px)) calc(22px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:6px;max-height:85vh;overflow:auto}
+.sheet h2{font-size:24px;padding-right:40px}
+.sheet .btn.big{margin-top:12px}
+.sheet-x{position:absolute;right:16px;top:16px;font-size:20px}
+.sgoals{margin:0 0 6px;padding-left:20px;font-size:15px}
+.sskills{display:flex;gap:6px;flex-wrap:wrap}
+.sskills span{border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:13px;color:var(--muted)}
+.sskills span.ok{background:var(--good-soft);border-color:var(--good);color:var(--good)}
+.coach{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--ink);color:var(--bg);display:flex;align-items:center;gap:12px;padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.coach .ct{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.3}
+.coach .ct span{font-size:13px;opacity:.75}
+.coach .dots{display:flex;gap:4px}.coach .dots i{width:8px;height:8px;border-radius:50%;background:rgba(127,127,127,.5)}
+.coach .dots i.ok{background:var(--good)}.coach .dots i.now{background:var(--amber)}
+.coach .icon-btn{color:inherit;border-color:rgba(127,127,127,.5)}
+body.has-coach{padding-bottom:calc(90px + env(safe-area-inset-bottom,0px))}
+.hub{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.hubcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:4px}
+.hubcard:hover{border-color:var(--accent)}
+.hubcard b{font-family:var(--f-display);font-size:20px}.hubcard span{color:var(--muted);font-size:15px}
+.hubcard em{font-style:normal;font-size:12px;color:var(--amber);font-weight:700}
+@media (max-width:560px){.t-steps{grid-template-columns:1fr}.today .btn.big{align-self:stretch}.nlabel{width:96px;font-size:12px}.nlabel.left{margin-left:-142px}}
 /* program list */
 .program{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--line)}
 .lvl-head{display:flex;align-items:baseline;gap:12px;padding:22px 0 8px}
@@ -282,13 +353,11 @@ input[type=text],select{border:1px solid var(--line);border-radius:8px;backgroun
 <header class="top"><div class="top-in">
   <a class="brand" href="#home"><div class="brand-mark"><div style="display:flex;align-items:flex-end;height:16px"><span style="height:6px"></span><span style="height:11px"></span><span style="height:16px"></span></div></div><b>Bậc Thang English</b></a>
   <nav class="tabs" id="nav">
-    <a href="#guide" data-r="guide">Cách học</a>
-    <a href="#home" data-r="home">Lộ trình</a>
+    <a href="#home" data-r="home">Học</a>
     <a href="#review" data-r="review">Ôn từ</a>
-    <a href="#sound" data-r="sound">Phát âm</a>
-    <a href="#stories" data-r="stories">Truyện</a>
-    <a href="#talk" data-r="talk">Giao tiếp AI</a>
-    <a href="#ielts" data-r="ielts">IELTS</a>
+    <a href="#more" data-r="more">Luyện thêm</a>
+    <a href="#me" data-r="me">Hồ sơ</a>
+    <a href="#guide" data-r="guide">Cách học</a>
   </nav>
   <div class="stat" id="stat"></div>
 </div></header>
@@ -706,7 +775,7 @@ function touchStreak(){const t=today(); if(state.streak.last===t) return;
   state.streak.count = state.streak.last && dayDiff(state.streak.last,t)===1 ? state.streak.count+1 : 1; state.streak.last=t;}
 function addXP(n){state.xp+=n; logXP(n); touchStreak(); save(); renderStat();}
 function save(){
-  checkBadges();
+  checkBadges(); if(typeof renderCoach==="function") setTimeout(renderCoach,0);
   try{localStorage.setItem(LS_KEY,JSON.stringify(state))}catch(e){}
   if(!cap.db||!uid) return;
   clearTimeout(saveTimer); saveTimer=setTimeout(flush,800);
@@ -802,7 +871,9 @@ function route(){const h=(location.hash||"#home").slice(1);return h||"home"}
 function render(){
   stopAudio();
   const r=route();
-  document.querySelectorAll("#nav a").forEach(a=>a.classList.toggle("on",a.dataset.r===r||(r.startsWith("lesson-")&&a.dataset.r==="home")));
+  const tabOf=r.startsWith("lesson-")||r.startsWith("test-")||r==="placement"?"home":["sound","stories","talk","ielts"].includes(r)?"more":r;
+  document.querySelectorAll("#nav a").forEach(a=>a.classList.toggle("on",a.dataset.r===tabOf));
+  closeSheet();
   app.innerHTML="";
   if(r.startsWith("lesson-")) renderLesson(r.slice(7));
   else if(r==="review") renderReview();
@@ -813,8 +884,10 @@ function render(){
   else if(r.startsWith("test-")) renderTest(parseInt(r.slice(5),10));
   else if(r==="stories") renderStories();
   else if(r==="placement") renderPlacement();
+  else if(r==="more") renderMore();
+  else if(r==="me") renderMe();
   else renderHome();
-  renderStat(); window.scrollTo(0,0);
+  renderStat(); renderCoach(); window.scrollTo(0,0);
 }
 function renderStat(){
   const due=Object.values(state.cards).filter(c=>c.due<=today()).length;
@@ -958,7 +1031,7 @@ function renderStories(){
   const q=el("section",{class:"panel"},`<h2>Bạn hiểu được bao nhiêu?</h2>`);let right=0,ans=0;
   st.quiz.forEach((qq,qi)=>{const w=el("div",{class:"quiz-q"},`<b>${qi+1}. ${esc(qq.q)}</b>`);const o=el("div",{class:"opts"});
     qq.o.forEach((x,oi)=>{const b=el("button",{class:"opt"},esc(x));b.onclick=()=>{if(w.dataset.done)return;w.dataset.done=1;ans++;if(oi===qq.a)right++;b.classList.add(oi===qq.a?"right":"wrong");if(oi!==qq.a)o.children[qq.a].classList.add("right");
-      if(ans===st.quiz.length){res.textContent=`Đúng ${right}/${st.quiz.length}.`;if(!state.stories)state.stories={};if(!state.stories[st.id]){state.stories[st.id]=true;addXP(10)}else save()}};o.append(b)});
+      if(ans===st.quiz.length){res.textContent=`Đúng ${right}/${st.quiz.length}.`;if(!state.stories)state.stories={};const dd=daily();dd.talk=Math.max(dd.talk||0,3);checkDaily();if(!state.stories[st.id]){state.stories[st.id]=true;addXP(10)}else save()}};o.append(b)});
     w.append(o);q.append(w)});
   const res=el("p",{style:"margin-top:12px;font-weight:600"});q.append(res);
   app.append(p,q);
@@ -1142,49 +1215,130 @@ function journeySVG(ci){
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Hành trình từ mất gốc đến IELTS, bạn đang ở ${LEVELS[ci].id}">
   <path d="${d}" class="road"/><path d="${d}" class="road-done" pathLength="1" stroke-dasharray="${prog} 1"/>${nodes}</svg>`;
 }
+function dueCount(){return Object.values(state.cards).filter(c=>c.due<=today()).length}
+function sessionSteps(){
+  const d=daily(), due=dueCount(), nx=nextLesson();
+  if(!due) d.review=true;
+  const nxSkill=nx?(SKILLS.find(s=>!(state.done[nx.id]||{})[s.k])||SKILLS[0]):SKILLS[0];
+  return [
+    {k:"review",t:"Khởi động: ôn thẻ",s:due?`${due} thẻ đến hạn · 5 phút`:"Hôm nay không có thẻ đến hạn",ok:!!d.review,href:"#review"},
+    {k:"skill",t:"Học bài mới",s:nx?`Phần ${nxSkill.n} · ${nx.title} · 15 phút`:"Bạn đã học hết giáo trình",ok:!!d.skill,href:nx?"#lesson-"+nx.id:"#more",tab:nxSkill.k},
+    cap.sample?{k:"talk",t:"Nói với AI",s:`${Math.min(3,d.talk||0)}/3 lượt · 5 phút`,ok:(d.talk||0)>=3,href:"#talk"}
+              :{k:"talk",t:"Nghe một truyện",s:"Nghe và trả lời 3 câu · 5 phút",ok:(d.talk||0)>=3,href:"#stories"}
+  ];
+}
+function goStep(st){if(st.tab)lessonTab=st.tab;state.session=today();save();if(location.hash===st.href)render();else location.hash=st.href.slice(1)}
+let coachEl=null;
+function renderCoach(){
+  if(!coachEl){coachEl=el("div",{class:"coach",hidden:""});document.body.append(coachEl)}
+  const r=route();
+  if(state.session!==today()||r==="home"){coachEl.hidden=true;document.body.classList.remove("has-coach");return}
+  const steps=sessionSteps(), i=steps.findIndex(x=>!x.ok);
+  coachEl.hidden=false;document.body.classList.add("has-coach");
+  const dots=steps.map((x,j)=>`<i class="${x.ok?"ok":j===i?"now":""}"></i>`).join("");
+  if(i<0){coachEl.innerHTML=`<div class="dots">${dots}</div><div class="ct"><b>Xong buổi học hôm nay!</b><span>Mai quay lại để giữ chuỗi ngày học nhé.</span></div>`;
+    const b=el("button",{class:"btn primary small"},"Về trang chính");b.onclick=()=>{state.session="";save();location.hash="home"};coachEl.append(b);return}
+  const st=steps[i], here=location.hash===st.href;
+  coachEl.innerHTML=`<div class="dots">${dots}</div><div class="ct"><b>Bước ${i+1}/3 · ${esc(st.t)}</b><span>${here?(st.k==="skill"?"Làm xong phần này là sang bước tiếp.":st.k==="review"?"Làm hết các thẻ là xong bước này.":"Xong là hoàn thành buổi học."):esc(st.s)}</span></div>`;
+  if(!here){const b=el("button",{class:"btn amber small"},i>0&&steps[i-1].ok?"Bước tiếp →":"Đi tới →");b.onclick=()=>goStep(st);coachEl.append(b)}
+  const x=el("button",{class:"icon-btn","aria-label":"Tạm dừng buổi học",title:"Tạm dừng"},"×");x.onclick=()=>{state.session="";save()};coachEl.append(x);
+}
+function greet(){const h=new Date().getHours();return h<11?"Chào buổi sáng":h<14?"Chào buổi trưa":h<18?"Chào buổi chiều":"Chào buổi tối"}
+let viewCh=null;
 function renderHome(){
-  const ci=currentLevelIdx(); const nx=nextLesson();
-  const dial=el("section",{class:"dial"});
-  dial.innerHTML=`<div class="hello"><div><div class="label">Trạm của bạn</div><h1>${nx?`Bài tiếp theo: <span class="en-title">${esc(nx.title)}</span>`:"Bạn đã học hết các bài có sẵn"}</h1>
-  <p class="muted" style="margin:6px 0 0">Mỗi ngày 20–30 phút: một bài mới hoặc nửa bài, cộng 5 phút ôn từ. Đều đặn quan trọng hơn học nhiều.</p></div>
-  <div class="row">${nx?`<a class="btn primary" href="#lesson-${nx.id}">Học tiếp</a>`:""}<a class="btn" href="#review">Ôn từ</a></div></div>
-  <div class="journey">${journeySVG(ci)}</div>`;
-  if(!state.guideSeen) app.append(el("section",{class:"guide-banner"},`<div style="min-width:0"><b>Lần đầu dùng app?</b><p>Đọc hướng dẫn 2 phút: mỗi ngày học gì, học theo thứ tự nào, bao lâu thì lên trình.</p></div><a class="btn primary" href="#guide">Xem cách học</a>`));
-  app.append(dial);
+  const nx=nextLesson(), steps=sessionSteps(), n=steps.filter(x=>x.ok).length, lv=LEVELS[currentLevelIdx()];
+  if(!state.guideSeen) app.append(el("section",{class:"guide-banner"},`<div style="min-width:0"><b>Lần đầu dùng app?</b><p>Xem hướng dẫn 2 phút, hoặc cứ bấm "Bắt đầu buổi học": app sẽ dẫn bạn từng bước.</p></div><a class="btn" href="#guide">Xem cách học</a>`));
+  const hero=el("section",{class:"today"});
+  hero.innerHTML=`<div class="t-top"><div><div class="label">${greet()}</div><h1>${n===3?"Hôm nay bạn đã học xong":"Buổi học hôm nay"}</h1></div>
+    <div class="t-badges"><div class="tb"><b>${state.streak.count}</b><span>ngày liền</span></div><div class="tb"><b>${lv.id}</b><span>${lv.name}</span></div></div></div>
+    <ol class="t-steps">${steps.map((x,j)=>`<li class="${x.ok?"ok":""}"><span class="ck">${x.ok?"✓":j+1}</span><div style="min-width:0"><b>${esc(x.t)}</b><span>${esc(x.s)}</span></div></li>`).join("")}</ol>`;
+  const go=el("button",{class:"btn amber big"},n===0?"Bắt đầu buổi học · 25 phút":n<3?"Học tiếp buổi hôm nay":"Học thêm một bài");
+  go.onclick=()=>{const st=steps.find(x=>!x.ok)||steps[1];goStep(st)};
+  hero.append(go);app.append(hero);
+  if(!state.placed&&!Object.keys(state.done).length) app.append(el("a",{class:"place-strip",href:"#placement"},`<b>Đã học tiếng Anh trước đây?</b><span>Kiểm tra trình độ 3 phút để bỏ qua phần đã biết →</span>`));
+  app.append(staircase(nx));
   const tip=TIPS[Math.floor(Date.now()/864e5)%TIPS.length];
-  app.append(questCard(nx));
-  app.append(weekChart());
-  if(!state.placed&&!Object.keys(state.done).length) app.append(el("section",{class:"panel",style:"margin-bottom:28px"},`<div class="row" style="justify-content:space-between"><div><b style="font-size:18px">Chưa biết bắt đầu từ đâu?</b><p class="muted" style="margin:2px 0 0">Làm bài kiểm tra 12 câu, khoảng 3 phút. App sẽ chọn bài phù hợp với bạn.</p></div><a class="btn amber" href="#placement">Kiểm tra trình độ</a></div>`));
-  app.append(el("section",{class:"tip"},`<div class="label">Mẹo học hôm nay</div><b>${esc(tip[0])}</b><p>${esc(tip[1])}</p>`));
-  app.append(badgeShelf());
-
-  const prog=el("section",{class:"program"});
-  prog.append(el("div",{style:"padding:18px 0 4px"},`<h2 style="font-size:24px">Giáo trình ${SYLLABUS.length} bài · 12 chương</h2><p class="muted" style="margin:4px 0 0">Học theo thứ tự từ trên xuống. Mỗi bài có mục tiêu, câu chuyện, từ vựng, ngữ pháp kèm công thức và lỗi hay gặp, bài tập, phần nói, phần viết và tóm tắt. Hết mỗi chương có bài kiểm tra, đạt 70% là qua chương.</p>`));
-  let num=0;
-  LEVELS.forEach(L=>{
-    const chs=CHAPTERS.filter(c=>c.level===L.id); if(!chs.length) return;
-    prog.append(el("div",{class:"lvl-head"},`<b>${L.id}</b><span class="muted">${L.name} · ${L.note}</span>`));
-    chs.forEach(ch=>{
-      const ls=syllabusLessons().filter(l=>CH_OF[l.id]===ch);
-      const doneN=ls.filter(l=>{const d=state.done[l.id]||{};return SKILLS.every(s=>d[s.k])}).length;
-      prog.append(el("div",{class:"ch-head"},`<span>Chương ${ch.n} · ${esc(ch.t)}</span><span class="muted">${doneN}/${ls.length} bài</span>`));
-      ls.forEach(l=>{num++;
-        const d=state.done[l.id]||{};
-        prog.append(el("a",{class:"lesson-row",href:"#lesson-"+l.id},`<div class="lr-num">${String(num).padStart(2,"0")}</div>
-          <div style="min-width:0"><div class="lr-title" style="font-family:var(--f-display)">${esc(l.title)}${HAND[l.id]?"":' <span class="aimark" title="AI soạn theo đề cương">✦</span>'}</div><div class="lr-sub">${esc(l.vi)}</div></div>
-          <div class="skills">${SKILLS.map(s=>`<div class="sk ${d[s.k]?"ok":""}" title="${s.n}">${s.n[0]}</div>`).join("")}</div>`));
-      });
-      const t=(state.tests||{})[ch.n];
-      prog.append(el("a",{class:"lesson-row test-row",href:"#test-"+ch.n},`<div class="lr-num">✓</div><div style="min-width:0"><div class="lr-title">Kiểm tra cuối chương ${ch.n}</div><div class="lr-sub">Từ vựng, ngữ pháp và nghe chép của cả chương</div></div><div class="pill ${t&&t.best>=70?"pass":""}">${t?`${t.best}%`:"Chưa làm"}</div>`));
-    });
-    if(L.id==="IELTS") prog.append(el("div",{class:"lesson-row",style:"grid-template-columns:1fr"},`<div><div class="lr-title">Luyện đề IELTS Writing và Speaking có chấm band</div><div class="lr-sub"><a href="#ielts">Mở phòng luyện IELTS</a></div></div>`));
-    prog.append(el("p",{class:"muted",style:"font-size:14px;margin:8px 0 0"},`Nghe thêm trên VOA Learning English: <a href="https://learningenglish.voanews.com/" target="_blank" rel="noopener">${VOA_SERIES[L.id]}</a>`));
+  app.append(el("section",{class:"tip",style:"margin-top:28px"},`<div class="label">Mẹo học hôm nay</div><b>${esc(tip[0])}</b><p>${esc(tip[1])}</p>`));
+}
+function lessonDone(id){const d=state.done[id]||{};return SKILLS.every(s=>d[s.k])}
+function staircase(nx){
+  const curCh=nx&&CH_OF[nx.id]?CH_OF[nx.id].n:12; if(viewCh==null)viewCh=curCh;
+  const ch=CHAPTERS.find(c=>c.n===viewCh);
+  const sec=el("section",{class:"stairs-sec"});
+  // chapter switcher
+  const sw=el("div",{class:"chsw",role:"tablist"});
+  CHAPTERS.forEach(c=>{const ls=syllabusLessons().filter(l=>CH_OF[l.id]===c),dn=ls.filter(l=>lessonDone(l.id)).length,t=(state.tests||{})[c.n],pass=t&&t.best>=70;
+    const pct=Math.round(100*dn/ls.length);
+    const b=el("button",{class:"chip"+(c.n===viewCh?" on":"")+(pass?" pass":""),role:"tab","aria-label":`Chương ${c.n}, ${dn}/${ls.length} bài`},`<svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" class="rg"/><circle cx="18" cy="18" r="15" class="rf" stroke-dasharray="${pct*0.9425} 100" transform="rotate(-90 18 18)"/></svg><span>${pass?"✓":c.n}</span>`);
+    b.onclick=()=>{viewCh=c.n;const old=document.querySelector(".stairs-sec");old.replaceWith(staircase(nextLesson()));document.querySelector(".chip.on")?.scrollIntoView({inline:"center",block:"nearest"})};sw.append(b)});
+  sec.append(sw);
+  const ls=syllabusLessons().filter(l=>CH_OF[l.id]===ch), dn=ls.filter(l=>lessonDone(l.id)).length;
+  sec.append(el("div",{class:"ch-banner"},`<div class="label">Chương ${ch.n} · ${ch.level==="IELTS"?"IELTS":ch.level}</div><h2>${esc(ch.t)}</h2><div class="qbar"><i style="width:${100*dn/ls.length}%"></i></div><span class="muted">${dn}/${ls.length} bài · học xong cả chương thì làm bài kiểm tra ở bậc cuối</span>`));
+  // the staircase itself
+  const OFF=[0,62,96,62,0,-62,-96,-62], GAP=112, items=ls.map(l=>({l})).concat([{test:ch}]);
+  const H=items.length*GAP+20;
+  const col=el("div",{class:"stairs",style:`height:${H}px`});
+  let path="";items.forEach((_,i)=>{const x=150+OFF[i%8],y=50+i*GAP;path+=(i?" L":"M")+x+" "+y});
+  col.innerHTML=`<svg class="trail" viewBox="0 0 300 ${H}" width="300" height="${H}" aria-hidden="true"><path d="${path}"/></svg>`;
+  items.forEach((it,i)=>{
+    const x=OFF[i%8], y=50+i*GAP;
+    let cls="node", inner, label;
+    if(it.test){const t=(state.tests||{})[ch.n];cls+=" test"+(t&&t.best>=70?" done":"");inner=`<svg viewBox="0 0 24 24" width="30" height="30"><path fill="currentColor" d="M7 3h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 14.9V17h3v3H8v-3h3v-2.1A5 5 0 0 1 8.3 12H8a4 4 0 0 1-4-4V5h3V3zm0 4H6v1a2 2 0 0 0 1 1.7V7zm11 0h-1v2.7A2 2 0 0 0 18 8V7z"/></svg>`;label=`Kiểm tra chương${t?` · ${t.best}%`:""}`}
+    else{const d=state.done[it.l.id]||{},k=SKILLS.filter(s=>d[s.k]).length,isNow=nx&&nx.id===it.l.id;
+      cls+=k===4?" done":isNow?" now":k?" part":"";
+      inner=k===4?"✓":`<span>${SYLLABUS.findIndex(e=>e.id===it.l.id)+1}</span>`;
+      label=it.l.title;
+      if(k&&k<4) inner+=`<svg class="ring" viewBox="0 0 76 76"><circle cx="38" cy="38" r="35" stroke-dasharray="${k/4*220} 220" transform="rotate(-90 38 38)"/></svg>`}
+    const b=el("button",{class:cls,style:`left:calc(50% + ${x}px);top:${y}px`,"aria-label":it.test?"Bài kiểm tra cuối chương":label},inner);
+    b.onclick=()=>openSheet(it);
+    col.append(b);
+    col.append(el("div",{class:"nlabel"+(x<0?" right":x>0?" left":" below"),style:`left:calc(50% + ${x}px);top:${y}px`},esc(label)));
+    if(!it.test&&nx&&nx.id===it.l.id) col.append(el("div",{class:"bubble",style:`left:calc(50% + ${x}px);top:${y-62}px`},Object.keys(state.done[it.l.id]||{}).length?"Học tiếp":"Bắt đầu"));
   });
-  const own=state.gen||[];
-  prog.append(el("div",{class:"lvl-head"},`<b>Thêm</b><span class="muted">Bài theo chủ đề riêng của bạn</span>`));
-  own.forEach(l=>{const d=state.done[l.id]||{};prog.append(el("a",{class:"lesson-row",href:"#lesson-"+l.id},`<div class="lr-num">${l.level}</div><div style="min-width:0"><div class="lr-title" style="font-family:var(--f-display)">${esc(l.title)}</div><div class="lr-sub">${esc(l.vi)}</div></div><div class="skills">${SKILLS.map(s=>`<div class="sk ${d[s.k]?"ok":""}">${s.n[0]}</div>`).join("")}</div>`))});
-  prog.append(genBlock());
-  app.append(prog);
+  sec.append(col);
+  const nxCh=CHAPTERS.find(c=>c.n===viewCh+1);
+  if(nxCh){const b=el("button",{class:"btn",style:"margin:8px auto 0;display:flex"},`Xem chương ${nxCh.n}: ${esc(nxCh.t)} →`);b.onclick=()=>{viewCh=nxCh.n;document.querySelector(".stairs-sec").replaceWith(staircase(nextLesson()));window.scrollTo({top:document.querySelector(".stairs-sec").offsetTop-80})};sec.append(b)}
+  return sec;
+}
+let sheetEl=null;
+function closeSheet(){if(sheetEl){sheetEl.remove();sheetEl=null}}
+function openSheet(it){
+  closeSheet();
+  sheetEl=el("div",{class:"sheet-wrap"});const back=el("div",{class:"sheet-back"});back.onclick=closeSheet;
+  const sh=el("div",{class:"sheet",role:"dialog","aria-modal":"true"});
+  if(it.test){const ch=it.test,t=(state.tests||{})[ch.n];
+    sh.innerHTML=`<div class="label">Bậc cuối chương ${ch.n}</div><h2>Kiểm tra: ${esc(ch.t)}</h2><p class="muted">Từ vựng, ngữ pháp, điền từ và nghe chép của cả chương. Đạt 70% là qua chương.${t?` Điểm cao nhất của bạn: <b>${t.best}%</b>.`:""}</p>`;
+    sh.append(el("a",{class:"btn amber big",href:"#test-"+ch.n},t?"Làm lại bài kiểm tra":"Làm bài kiểm tra"))}
+  else{const l=it.l,d=state.done[l.id]||{},nxt=SKILLS.find(s=>!d[s.k]);
+    sh.innerHTML=`<div class="label">Bài ${SYLLABUS.findIndex(e=>e.id===l.id)+1} · Chương ${CH_OF[l.id].n} · ${l.level}</div><h2 class="en-title">${esc(l.title)}</h2><p class="muted" style="margin:2px 0 10px">${esc(l.vi)}</p>
+      ${l.goals?`<ul class="sgoals">${l.goals.map(g=>`<li>${esc(g)}</li>`).join("")}</ul>`:""}
+      <div class="sskills">${SKILLS.map(s=>`<span class="${d[s.k]?"ok":""}">${d[s.k]?"✓ ":""}${s.n}</span>`).join("")}</div>`;
+    const b=el("a",{class:"btn primary big",href:"#lesson-"+l.id},nxt?(Object.keys(d).length?`Học tiếp: phần ${nxt.n}`:"Bắt đầu bài này"):"Học lại bài này");
+    b.onclick=()=>{lessonTab=nxt?nxt.k:"listen"};sh.append(b)}
+  const x=el("button",{class:"icon-btn sheet-x","aria-label":"Đóng"},"×");x.onclick=closeSheet;sh.append(x);
+  sheetEl.append(back,sh);document.body.append(sheetEl);
+}
+function renderMore(){
+  app.append(el("section",{class:"g-hero",style:"margin-bottom:18px"},`<div class="label">Luyện thêm</div><h1>Chọn kỹ năng muốn luyện</h1><p>Ngoài giáo trình chính. Dùng khi bạn còn thời gian, hoặc muốn tập trung vào một kỹ năng.</p>`));
+  const g=el("div",{class:"hub"});
+  [["#talk","Giao tiếp với AI","Đóng vai đối tác, đồng nghiệp, giám khảo IELTS. AI sửa câu cho bạn sau mỗi lượt.",cap.sample?"":"Cần mạng và claude.ai"],
+   ["#stories","Truyện đọc chậm","Truyện ngắn kiểu VOA. Chạm vào từ để xem nghĩa và lưu lại.",""],
+   ["#sound","Phát âm cho người Việt","Âm cuối, TH, trọng âm, nối âm. Nghe phân biệt rồi tự nói.",""],
+   ["#ielts","Phòng luyện IELTS","Viết Task 1, Task 2 và nói Speaking, có chấm band ước lượng.",cap.sample?"":"Cần mạng và claude.ai"],
+   ["#placement","Kiểm tra trình độ","12 câu, 3 phút. App chọn chỗ bắt đầu phù hợp.",""]]
+   .forEach(([h,t,d,w])=>g.append(el("a",{class:"hubcard",href:h},`<b>${t}</b><span>${d}</span>${w?`<em>${w}</em>`:""}`)));
+  app.append(g);
+  const own=el("section",{class:"panel",style:"margin-top:18px"},`<h2>Bài theo chủ đề riêng</h2><p class="muted" style="margin:0">Gõ một tình huống ở chỗ làm của bạn, AI soạn một bài đủ 4 kỹ năng.</p>`);
+  (state.gen||[]).forEach(l=>own.append(el("a",{class:"lesson-row",href:"#lesson-"+l.id},`<div class="lr-num">${l.level}</div><div style="min-width:0"><div class="lr-title">${esc(l.title)}</div><div class="lr-sub">${esc(l.vi)}</div></div>`)));
+  own.append(genBlock());app.append(own);
+}
+function renderMe(){
+  const ci=currentLevelIdx(),done=SYLLABUS.filter(e=>lessonDone(e.id)).length,cards=Object.keys(state.cards).length;
+  const top=el("section",{class:"dial"},`<div class="label">Hồ sơ của bạn</div><h1 style="font-size:clamp(24px,4vw,32px)">${LEVELS[ci].id} · ${LEVELS[ci].name}</h1>
+    <div class="kpis"><div><b>${done}/${SYLLABUS.length}</b>bài đã xong</div><div><b>${state.streak.count}</b>ngày học liền</div><div><b>${state.xp}</b>điểm</div><div><b>${cards}</b>thẻ trong hộp ôn</div></div>
+    <div class="journey">${journeySVG(ci)}</div>`);
+  app.append(top,weekChart(),badgeShelf());
+  app.append(el("p",{class:"muted"},`Muốn chuyển tiến độ sang máy khác hoặc bản offline: xem cuối trang <a href="#guide">Cách học</a>.`));
 }
 function genBlock(){
   const wrap=el("div",{style:"padding:12px 0"});
